@@ -8,6 +8,21 @@ app.use(express.json());
 // Historial de conversaciones por número (para mantener contexto)
 const conversaciones = {};
 
+// Palabras clave que indican que el cliente quiere hablar con un humano
+const PALABRAS_HUMANO = [
+  "hablar con alguien", "hablar con un humano", "hablar con una persona",
+  "hablar con agente", "atención al cliente", "servicio al cliente",
+  "un agente", "una persona", "un humano", "quiero hablar con",
+  "necesito hablar con", "atenderme", "atención personalizada",
+  "transferir", "transferirme", "conversar con", "asesor humano",
+  "representante", "ejecutivo", "encargado", "dueño", "gerente"
+];
+
+function detectarSolicitudHumano(texto) {
+  const textoLower = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return PALABRAS_HUMANO.some(palabra => textoLower.includes(palabra));
+}
+
 // Prompt del sistema — personalidad del bot para InnovaInternacional
 const SYSTEM_PROMPT = `Eres un asistente virtual amable y profesional de InnovaInternacional, 
 una tienda de venta de ropa. Tu trabajo es ayudar a los clientes con:
@@ -68,6 +83,23 @@ app.post("/webhook", async (req, res) => {
 
     const textoRecibido = message.text.body;
     console.log(`📩 Mensaje de ${from}: ${textoRecibido}`);
+
+    // Detectar si el cliente quiere hablar con un humano
+    if (detectarSolicitudHumano(textoRecibido)) {
+      const respuestaHumano = "Un agente se comunicará contigo en breve. Gracias por tu paciencia. 😊";
+      await enviarMensaje(from, respuestaHumano);
+
+      if (process.env.OWNER_PHONE) {
+        await enviarMensaje(
+          process.env.OWNER_PHONE,
+          `🔔 *Cliente necesita atención humana*\n\n📞 Teléfono: ${from}\n💬 Mensaje: "${textoRecibido}"`
+        );
+      }
+
+      console.log(`🔔 Notificación enviada al dueño - Cliente: ${from}`);
+      res.sendStatus(200);
+      return;
+    }
 
     // Inicializar historial si es primera vez
     if (!conversaciones[from]) {
