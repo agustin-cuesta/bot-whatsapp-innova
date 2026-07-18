@@ -292,40 +292,6 @@ async function enviarMensaje(to, texto, platform = "whatsapp") {
   }
 }
 
-// ─── Renovación automática del token de Instagram ────────────────────────────
-async function renovarTokenInstagram() {
-  try {
-    const tokenActual = process.env.INSTAGRAM_TOKEN;
-    if (!tokenActual) return;
-
-    const response = await axios.get(
-      "https://graph.instagram.com/refresh_access_token",
-      {
-        params: {
-          grant_type: "ig_refresh_token",
-          access_token: tokenActual,
-        },
-      }
-    );
-
-    const nuevoToken = response.data.access_token;
-    const expiraEn = response.data.expires_in; // segundos
-
-    // Actualizar en memoria para las próximas llamadas
-    process.env.INSTAGRAM_TOKEN = nuevoToken;
-
-    console.log(`🔄 Token de Instagram renovado. Expira en ${Math.floor(expiraEn / 86400)} días`);
-  } catch (error) {
-    console.error("❌ Error renovando token de Instagram:", error.message);
-    if (error.response) {
-      console.error("📋 Data:", JSON.stringify(error.response.data, null, 2));
-    }
-  }
-}
-
-// Renovar token cada 30 días (en ms: 30 * 24 * 60 * 60 * 1000)
-setInterval(renovarTokenInstagram, 30 * 24 * 60 * 60 * 1000);
-
 // ─── Iniciar servidor ─────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
