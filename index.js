@@ -79,12 +79,19 @@ app.post("/webhook", async (req, res) => {
     }
 
     const entry = body.entry?.[0];
-    const change = entry?.changes?.[0];
-    const value = change?.value;
     const platform = object === "whatsapp_business_account" ? "whatsapp" : object;
 
-    // WhatsApp: value.messages | Facebook/Instagram: value.messaging
-    const rawMessages = value?.messages || value?.messaging;
+    // WhatsApp: entry.changes[0].value.messages
+    // Facebook/Instagram: entry.messaging (directo en entry)
+    let rawMessages;
+    if (platform === "whatsapp") {
+      const change = entry?.changes?.[0];
+      const value = change?.value;
+      rawMessages = value?.messages;
+    } else {
+      // Messenger e Instagram usan entry.messaging directamente
+      rawMessages = entry?.messaging;
+    }
 
     if (!rawMessages || rawMessages.length === 0) {
       return res.sendStatus(200);
