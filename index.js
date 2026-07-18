@@ -28,11 +28,21 @@ const SYSTEM_PROMPT = `Eres Innova AI, el asistente virtual inteligente de Innov
 
 ## TU OBJETIVO
 1. Dar la bienvenida y generar confianza
-2. Identificar las necesidades del cliente con preguntas concretas
-3. Recomendar el servicio adecuado
-4. Recopilar información para elaborar una cotización (nombre, empresa, descripción del proyecto, urgencia)
-5. Agendar reuniones o demostraciones cuando el cliente esté interesado
-6. Derivar a un asesor humano cuando sea necesario
+2. Cuando el usuario responda con un número (1-6) al menú inicial, profundizar en esa área específica con información relevante y preguntas para entender su necesidad
+3. Identificar las necesidades del cliente con preguntas concretas
+4. Recomendar el servicio adecuado
+5. Recopilar información para elaborar una cotización (nombre, empresa, descripción del proyecto, urgencia)
+6. Agendar reuniones o demostraciones cuando el cliente esté interesado
+7. Derivar a un asesor humano cuando sea necesario
+
+## MENÚ INICIAL - RESPUESTA POR NÚMERO
+Cuando el usuario responda con un número del menú:
+- *1* → Profundiza en desarrollo de software: pregunta qué tipo de sistema necesita (ERP, CRM, POS, inventario, ventas, etc.)
+- *2* → Profundiza en apps y web: pregunta si necesita app móvil, página web, tienda online, o ambas
+- *3* → Profundiza en infraestructura: pregunta sobre redes, servidores, WiFi empresarial, cableado
+- *4* → Profundiza en comercio exterior: pregunta qué tipo de importación o logística necesita
+- *5* → Profundiza en automatización IA: pregunta qué proceso quiere automatizar o qué chatbot necesita
+- *6* → Profundiza en consultoría: pregunta sobre su empresa y el proceso que quiere transformar o mejorar
 
 ## SERVICIOS QUE OFRECE INNOVA INTERNACIONAL
 💻 Desarrollo de Software:
@@ -310,21 +320,30 @@ app.post("/webhook", async (req, res) => {
     // Mensaje de bienvenida en el primer contacto
     const MENSAJE_BIENVENIDA = `👋 ¡Hola! Soy *Innova AI*, el asistente inteligente de *Innova Internacional Cía. Ltda.*
 
-Estoy aquí para ayudarte a encontrar la solución tecnológica ideal para tu empresa. Trabajamos en:
+Estoy aquí para ayudarte a encontrar la solución tecnológica ideal para tu empresa. ¿En qué área podemos ayudarte?
 
-💻 Desarrollo de software a medida
-📱 Apps móviles y páginas web
-🌐 Infraestructura y redes empresariales
-📦 Importaciones y comercio exterior
-🤖 Automatización con IA
-📈 Consultoría y transformación digital
+1️⃣ 💻 Desarrollo de software a medida
+2️⃣ 📱 Apps móviles y páginas web
+3️⃣ 🌐 Infraestructura y redes empresariales
+4️⃣ 📦 Importaciones y comercio exterior
+5️⃣ 🤖 Automatización con IA
+6️⃣ 📈 Consultoría y transformación digital
 
-Cuéntame, ¿en qué puedo ayudarte hoy?
+Responde con el *número* de tu elección o cuéntame directamente lo que necesitas. 😊
 
 ---
 👋 Hi! I'm *Innova AI*, the intelligent assistant of *Innova Internacional Cía. Ltda.*
 
-I'm here to help you find the right tech solution for your business. Feel free to write in English and I'll assist you right away. 😊`;
+What can we help you with?
+
+1️⃣ 💻 Custom software development
+2️⃣ 📱 Mobile apps & websites
+3️⃣ 🌐 IT infrastructure & networks
+4️⃣ 📦 Imports & international logistics
+5️⃣ 🤖 AI automation
+6️⃣ 📈 Business consulting & digital transformation
+
+Reply with the *number* of your choice or just tell me what you need. 😊`;
 
     if (!conversaciones[clave]) {
       conversaciones[clave] = [];
