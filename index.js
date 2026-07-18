@@ -315,8 +315,6 @@ async function renovarTokenInstagram() {
     process.env.INSTAGRAM_TOKEN = nuevoToken;
 
     console.log(`🔄 Token de Instagram renovado. Expira en ${Math.floor(expiraEn / 86400)} días`);
-    console.log(`📝 Nuevo token: ${nuevoToken.substring(0, 20)}...`);
-    console.log(`⚠️  Recuerda actualizar INSTAGRAM_TOKEN en tu .env con el nuevo token`);
   } catch (error) {
     console.error("❌ Error renovando token de Instagram:", error.message);
     if (error.response) {
@@ -333,8 +331,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Bot InnovaInternacional corriendo en puerto ${PORT}`);
   console.log(`📡 Webhook URL: http://localhost:${PORT}/webhook`);
-  // Renovar token al iniciar si ya tenemos uno
-  if (process.env.INSTAGRAM_TOKEN) {
-    renovarTokenInstagram();
-  }
 });
