@@ -258,7 +258,8 @@ async function enviarMensaje(to, texto, platform = "whatsapp") {
         }
       );
     } else if (platform === "instagram") {
-      // Instagram usa su propio token
+      // Instagram DM usa el Page Access Token (vinculado a la página de Facebook)
+      const igToken = process.env.INSTAGRAM_TOKEN || process.env.PAGE_ACCESS_TOKEN;
       await axios.post(
         `https://graph.facebook.com/v19.0/me/messages`,
         {
@@ -268,7 +269,7 @@ async function enviarMensaje(to, texto, platform = "whatsapp") {
         },
         {
           headers: {
-            Authorization: `Bearer ${process.env.INSTAGRAM_TOKEN}`,
+            Authorization: `Bearer ${igToken}`,
             "Content-Type": "application/json",
           },
         }
