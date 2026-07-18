@@ -241,8 +241,8 @@ async function enviarMensaje(to, texto, platform = "whatsapp") {
           },
         }
       );
-    } else if (platform === "page" || platform === "instagram") {
-      // Facebook Messenger e Instagram usan el mismo endpoint
+    } else if (platform === "page") {
+      // Facebook Messenger
       await axios.post(
         `https://graph.facebook.com/v19.0/${process.env.PAGE_ID}/messages`,
         {
@@ -253,6 +253,22 @@ async function enviarMensaje(to, texto, platform = "whatsapp") {
         {
           headers: {
             Authorization: `Bearer ${process.env.PAGE_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    } else if (platform === "instagram") {
+      // Instagram usa su propio token
+      await axios.post(
+        `https://graph.facebook.com/v19.0/me/messages`,
+        {
+          recipient: { id: to },
+          message: { text: texto },
+          messaging_type: "RESPONSE",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.INSTAGRAM_TOKEN}`,
             "Content-Type": "application/json",
           },
         }
