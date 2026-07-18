@@ -5,7 +5,7 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-// Historial de conversaciones por número (para mantener contexto)
+// Historial de conversaciones por número/plataforma (para mantener contexto)
 const conversaciones = {};
 
 // Palabras clave que indican que el cliente quiere hablar con un humano
@@ -36,7 +36,7 @@ una tienda de venta de ropa. Tu trabajo es ayudar a los clientes con:
 Responde siempre en español, de forma cordial y concisa. 
 Si no tienes información específica sobre un producto, sugiere al cliente 
 que se comunique directamente con la tienda para más detalles.
-Mantén las respuestas cortas y directas, ideales para WhatsApp.`;
+Mantén las respuestas cortas y directas.`;
 
 // ─── Webhook: verificación de Meta ───────────────────────────────────────────
 app.get("/webhook", (req, res) => {
@@ -53,76 +53,118 @@ app.get("/webhook", (req, res) => {
   }
 });
 
+// ─── Endpoint de prueba ──────────────────────────────────────────────────────
+app.get("/", (req, res) => {
+  res.json({ status: "ok", bot: "InnovaBot", platforms: ["whatsapp", "facebook", "instagram"] });
+});
+
 // ─── Webhook: recibir mensajes ────────────────────────────────────────────────
 app.post("/webhook", async (req, res) => {
   try {
     const body = req.body;
+    const object = body.object;
 
-    if (body.object !== "whatsapp_business_account") {
+    console.log(`📥 Webhook recibido - object: ${object}`);
+    console.log(`📥 Body completo:`, JSON.stringify(body, null, 2));
+
+    // Aceptar mensajes de WhatsApp, Facebook e Instagram
+    const plataformasValidas = [
+      "whatsapp_business_account",
+      "page",
+      "instagram"
+    ];
+
+    if (!plataformasValidas.includes(object)) {
       return res.sendStatus(404);
     }
 
     const entry = body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
-    const messages = value?.messages;
+    const platform = object === "whatsapp_business_account" ? "whatsapp" : object;
 
-    if (!messages || messages.length === 0) {
+    // WhatsApp: value.messages | Facebook/Instagram: value.messaging
+    const rawMessages = value?.messages || value?.messaging;
+
+    if (!rawMessages || rawMessages.length === 0) {
       return res.sendStatus(200);
     }
 
-    const message = messages[0];
-    const from = message.from;
-    const messageType = message.type;
+    const raw = rawMessages[0];
+    let from = "";
+    let textoRecibido = "";
 
-    // Solo procesamos mensajes de texto
-    if (messageType !== "text") {
-      await enviarMensaje(from, "Por el momento solo puedo responder mensajes de texto. 😊");
+    if (platform === "whatsapp") {
+      // WhatsApp: { from, type: "text", text: { body } }
+      from = raw.from;
+      if (raw.type !== "text") {
+        await enviarMensaje(from, "Por el momento solo puedo responder mensajes de texto. 😊", platform);
+        return res.sendStatus(200);
+      }
+      textoRecibido = raw.text?.body || "";
+    } else {
+      // Facebook/Instagram: { sender: { id }, message: { text } }
+      from = raw.sender?.id;
+      const msg = raw.message;
+      if (!msg || !msg.text) {
+        // No es texto (sticker, imagen, etc.)
+        if (from) {
+          await enviarMensaje(from, "Por el momento solo puedo responder mensajes de texto. 😊", platform);
+        }
+        return res.sendStatus(200);
+      }
+      textoRecibido = msg.text;
+    }
+
+    if (!from || !textoRecibido) {
       return res.sendStatus(200);
     }
 
-    const textoRecibido = message.text.body;
-    console.log(`📩 Mensaje de ${from}: ${textoRecibido}`);
+    console.log(`📩 [${platform.toUpperCase()}] Mensaje de ${from}: ${textoRecibido}`);
 
     // Detectar si el cliente quiere hablar con un humano
     if (detectarSolicitudHumano(textoRecibido)) {
       const respuestaHumano = "Un agente se comunicará contigo en breve. Gracias por tu paciencia. 😊";
-      await enviarMensaje(from, respuestaHumano);
+      await enviarMensaje(from, respuestaHumano, platform);
 
       if (process.env.OWNER_PHONE) {
         await enviarMensaje(
           process.env.OWNER_PHONE,
-          `🔔 *Cliente necesita atención humana*\n\n📞 Teléfono: ${from}\n💬 Mensaje: "${textoRecibido}"`
+          `🔔 *Cliente necesita atención humana*\n\n📱 Plataforma: ${platform}\n📞 ID: ${from}\n💬 Mensaje: "${textoRecibido}"`,
+          "whatsapp"
         );
       }
 
-      console.log(`🔔 Notificación enviada al dueño - Cliente: ${from}`);
+      console.log(`🔔 Notificación enviada al dueño - Cliente: ${from} (${platform})`);
       res.sendStatus(200);
       return;
     }
 
+    // Clave única por plataforma + usuario
+    const clave = `${platform}:${from}`;
+
     // Inicializar historial si es primera vez
-    if (!conversaciones[from]) {
-      conversaciones[from] = [];
+    if (!conversaciones[clave]) {
+      conversaciones[clave] = [];
     }
 
     // Agregar mensaje del usuario al historial
-    conversaciones[from].push({ role: "user", parts: [{ text: textoRecibido }] });
+    conversaciones[clave].push({ role: "user", parts: [{ text: textoRecibido }] });
 
     // Limitar historial a últimos 10 mensajes
-    if (conversaciones[from].length > 10) {
-      conversaciones[from] = conversaciones[from].slice(-10);
+    if (conversaciones[clave].length > 10) {
+      conversaciones[clave] = conversaciones[clave].slice(-10);
     }
 
-    // Obtener respuesta de Gemini
-    const respuesta = await obtenerRespuestaGemini(conversaciones[from]);
+    // Obtener respuesta de la IA
+    const respuesta = await obtenerRespuesta(conversaciones[clave]);
 
     // Agregar respuesta al historial
-    conversaciones[from].push({ role: "model", parts: [{ text: respuesta }] });
+    conversaciones[clave].push({ role: "model", parts: [{ text: respuesta }] });
 
-    // Enviar respuesta por WhatsApp
-    await enviarMensaje(from, respuesta);
-    console.log(`✅ Respuesta enviada a ${from}: ${respuesta}`);
+    // Enviar respuesta por la misma plataforma
+    await enviarMensaje(from, respuesta, platform);
+    console.log(`✅ [${platform.toUpperCase()}] Respuesta enviada a ${from}: ${respuesta}`);
 
     res.sendStatus(200);
   } catch (error) {
@@ -136,9 +178,8 @@ app.post("/webhook", async (req, res) => {
 });
 
 // ─── Función: consultar Groq ──────────────────────────────────────────────────
-async function obtenerRespuestaGemini(historial) {
+async function obtenerRespuesta(historial) {
   try {
-    // Convertir historial de Gemini a formato OpenAI/Groq
     const mensajes = [
       { role: "system", content: SYSTEM_PROMPT },
       ...historial.map(m => ({
@@ -174,29 +215,47 @@ async function obtenerRespuestaGemini(historial) {
   }
 }
 
-// ─── Función: enviar mensaje por WhatsApp ─────────────────────────────────────
-async function enviarMensaje(to, texto) {
+// ─── Función: enviar mensaje por cualquier plataforma ─────────────────────────
+async function enviarMensaje(to, texto, platform = "whatsapp") {
   try {
-    await axios.post(
-      `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`,
-      {
-        messaging_product: "whatsapp",
-        to: to,
-        type: "text",
-        text: { body: texto },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-          "Content-Type": "application/json",
+    if (platform === "whatsapp") {
+      await axios.post(
+        `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`,
+        {
+          messaging_product: "whatsapp",
+          to: to,
+          type: "text",
+          text: { body: texto },
         },
-      }
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    } else if (platform === "page" || platform === "instagram") {
+      // Facebook Messenger e Instagram usan el mismo endpoint
+      await axios.post(
+        `https://graph.facebook.com/v19.0/${process.env.PAGE_ID}/messages`,
+        {
+          recipient: { id: to },
+          message: { text: texto },
+          messaging_type: "RESPONSE",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.PAGE_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
   } catch (error) {
-    console.error("❌ Error enviando mensaje WhatsApp:", error.message);
+    console.error(`❌ Error enviando mensaje [${platform}]:`, error.message);
     if (error.response) {
-      console.error("📋 WhatsApp Status:", error.response.status);
-      console.error("📋 WhatsApp Data:", JSON.stringify(error.response.data, null, 2));
+      console.error("📋 Status:", error.response.status);
+      console.error("📋 Data:", JSON.stringify(error.response.data, null, 2));
     }
     throw error;
   }
