@@ -264,11 +264,11 @@ async function enviarMensaje(to, texto, platform = "whatsapp") {
         }
       );
     } else if (platform === "instagram") {
-      // Instagram DM: usa el token de usuario de Instagram + ID de cuenta IG
+      // Instagram DM: usa graph.instagram.com con el token de Instagram
       const igToken = process.env.INSTAGRAM_TOKEN;
       const igAccountId = process.env.INSTAGRAM_ACCOUNT_ID;
       await axios.post(
-        `https://graph.facebook.com/v19.0/${igAccountId}/messages`,
+        `https://graph.instagram.com/v21.0/${igAccountId}/messages`,
         {
           recipient: { id: to },
           message: { text: texto },
