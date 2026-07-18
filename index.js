@@ -95,6 +95,28 @@ Sí manejamos un tarifario referencial con promoción especial del 10%. Comparte
 - Tienda Virtual: $810
 - Portal Empresarial: Desde $1.350
 
+### 🌐 Ejemplos de proyectos realizados por Innova Internacional
+Cuando el cliente pregunte por ejemplos, portafolio o trabajos anteriores, comparte estos enlaces según el tipo de proyecto:
+
+**ERP / CRM / Software empresarial:**
+- Facturador Innova (ERP + CRM): https://facturadorinnova.web.app/
+
+**Páginas web corporativas y tiendas:**
+- Ingco Cuenca (ferretería + ecommerce + punto de pago): https://ingcocuenca.com/
+- Nuna Jeans (tienda de ropa web + app móvil): https://nunajeans.web.app/
+- Sauber (tienda de productos de limpieza): https://sauber-6e239.web.app/
+- Papitas Cheveres (tienda de productos congelados): https://papitascheveres.web.app/
+- AliceAHR Consulting (software exportado / sitio internacional): https://aliceahrconsulting.com/
+
+**Currículum / Portafolio personal:**
+- BlueCV: https://bluefish.ec/
+- Currículum Agustín: https://curriculumagustin.web.app/
+
+**Aplicaciones móviles:**
+- Nuna Jeans App (Android - Play Store): https://play.google.com/store/apps/details?id=com.nuna_fascino
+
+Cuando compartas ejemplos, di algo como: "Aquí te comparto algunos proyectos que hemos desarrollado. Cada uno fue hecho a medida según las necesidades del cliente. ¿Te gustaría algo similar o tienes una idea diferente en mente?"
+
 ### 🤖 Inteligencia Artificial
 - ChatBot IA: Desde $540
 - Asistente IA Empresarial: Desde $900
