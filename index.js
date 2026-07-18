@@ -113,6 +113,12 @@ app.post("/webhook", async (req, res) => {
       // Facebook/Instagram: { sender: { id }, message: { text } }
       from = raw.sender?.id;
       const msg = raw.message;
+
+      // Ignorar mensajes echo (enviados por el propio bot)
+      if (msg?.is_echo) {
+        return res.sendStatus(200);
+      }
+
       if (!msg || !msg.text) {
         // No es texto (sticker, imagen, etc.)
         if (from) {
@@ -258,10 +264,11 @@ async function enviarMensaje(to, texto, platform = "whatsapp") {
         }
       );
     } else if (platform === "instagram") {
-      // Instagram DM usa el Page Access Token (vinculado a la página de Facebook)
-      const igToken = process.env.INSTAGRAM_TOKEN || process.env.PAGE_ACCESS_TOKEN;
+      // Instagram DM: usa el token de usuario de Instagram + ID de cuenta IG
+      const igToken = process.env.INSTAGRAM_TOKEN;
+      const igAccountId = process.env.INSTAGRAM_ACCOUNT_ID;
       await axios.post(
-        `https://graph.facebook.com/v19.0/me/messages`,
+        `https://graph.facebook.com/v19.0/${igAccountId}/messages`,
         {
           recipient: { id: to },
           message: { text: texto },
@@ -285,9 +292,49 @@ async function enviarMensaje(to, texto, platform = "whatsapp") {
   }
 }
 
+// ─── Renovación automática del token de Instagram ────────────────────────────
+async function renovarTokenInstagram() {
+  try {
+    const tokenActual = process.env.INSTAGRAM_TOKEN;
+    if (!tokenActual) return;
+
+    const response = await axios.get(
+      "https://graph.instagram.com/refresh_access_token",
+      {
+        params: {
+          grant_type: "ig_refresh_token",
+          access_token: tokenActual,
+        },
+      }
+    );
+
+    const nuevoToken = response.data.access_token;
+    const expiraEn = response.data.expires_in; // segundos
+
+    // Actualizar en memoria para las próximas llamadas
+    process.env.INSTAGRAM_TOKEN = nuevoToken;
+
+    console.log(`🔄 Token de Instagram renovado. Expira en ${Math.floor(expiraEn / 86400)} días`);
+    console.log(`📝 Nuevo token: ${nuevoToken.substring(0, 20)}...`);
+    console.log(`⚠️  Recuerda actualizar INSTAGRAM_TOKEN en tu .env con el nuevo token`);
+  } catch (error) {
+    console.error("❌ Error renovando token de Instagram:", error.message);
+    if (error.response) {
+      console.error("📋 Data:", JSON.stringify(error.response.data, null, 2));
+    }
+  }
+}
+
+// Renovar token cada 30 días (en ms: 30 * 24 * 60 * 60 * 1000)
+setInterval(renovarTokenInstagram, 30 * 24 * 60 * 60 * 1000);
+
 // ─── Iniciar servidor ─────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Bot InnovaInternacional corriendo en puerto ${PORT}`);
   console.log(`📡 Webhook URL: http://localhost:${PORT}/webhook`);
+  // Renovar token al iniciar si ya tenemos uno
+  if (process.env.INSTAGRAM_TOKEN) {
+    renovarTokenInstagram();
+  }
 });
