@@ -114,13 +114,18 @@ app.post("/webhook", async (req, res) => {
       from = raw.sender?.id;
       const msg = raw.message;
 
-      // Ignorar mensajes echo (enviados por el propio bot)
-      if (msg?.is_echo) {
+      // Ignorar eventos que no son mensajes (read, delivery, etc.)
+      if (!msg) {
         return res.sendStatus(200);
       }
 
-      if (!msg || !msg.text) {
-        // No es texto (sticker, imagen, etc.)
+      // Ignorar mensajes echo (enviados por el propio bot)
+      if (msg.is_echo) {
+        return res.sendStatus(200);
+      }
+
+      if (!msg.text) {
+        // No es texto (sticker, imagen, etc.) — solo responder si hay from válido
         if (from) {
           await enviarMensaje(from, "Por el momento solo puedo responder mensajes de texto. 😊", platform);
         }
