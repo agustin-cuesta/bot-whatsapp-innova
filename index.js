@@ -318,32 +318,28 @@ app.post("/webhook", async (req, res) => {
     const clave = `${platform}:${from}`;
 
     // Mensaje de bienvenida en el primer contacto
-    const MENSAJE_BIENVENIDA = `👋 ¡Hola! Soy *Innova AI*, el asistente inteligente de *Innova Internacional Cía. Ltda.*
+    const MENSAJE_BIENVENIDA = `👋 ¡Hola! Soy *Innova AI* de *Innova Internacional*. ¿En qué puedo ayudarte?
 
-Estoy aquí para ayudarte a encontrar la solución tecnológica ideal para tu empresa. ¿En qué área podemos ayudarte?
-
-1️⃣ 💻 Desarrollo de software a medida
-2️⃣ 📱 Apps móviles y páginas web
-3️⃣ 🌐 Infraestructura y redes empresariales
-4️⃣ 📦 Importaciones y comercio exterior
+1️⃣ 💻 Software a medida
+2️⃣ 📱 Apps y páginas web
+3️⃣ 🌐 Infraestructura y redes
+4️⃣ 📦 Importaciones
 5️⃣ 🤖 Automatización con IA
-6️⃣ 📈 Consultoría y transformación digital
+6️⃣ 📈 Consultoría empresarial
 
-Responde con el *número* de tu elección o cuéntame directamente lo que necesitas. 😊
+Elige un número o cuéntame directamente. 😊
 
 ---
-👋 Hi! I'm *Innova AI*, the intelligent assistant of *Innova Internacional Cía. Ltda.*
+👋 Hi! I'm *Innova AI* from *Innova Internacional*. How can I help you?
 
-What can we help you with?
-
-1️⃣ 💻 Custom software development
-2️⃣ 📱 Mobile apps & websites
-3️⃣ 🌐 IT infrastructure & networks
-4️⃣ 📦 Imports & international logistics
+1️⃣ 💻 Custom software
+2️⃣ 📱 Apps & websites
+3️⃣ 🌐 IT infrastructure
+4️⃣ 📦 Imports & logistics
 5️⃣ 🤖 AI automation
-6️⃣ 📈 Business consulting & digital transformation
+6️⃣ 📈 Business consulting
 
-Reply with the *number* of your choice or just tell me what you need. 😊`;
+Pick a number or just tell me what you need. 😊`;
 
     if (!conversaciones[clave]) {
       conversaciones[clave] = [];
