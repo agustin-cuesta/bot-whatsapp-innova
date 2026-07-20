@@ -394,9 +394,9 @@ async function obtenerRespuesta(historial) {
     const response = await axios.post(
       "https://api.groq.com/openai/v1/chat/completions",
       {
-        model: "llama-3.1-8b-instant",
+        model: "llama-3.3-70b-versatile",
         messages: mensajes,
-        max_tokens: 500,
+        max_tokens: 800,
         temperature: 0.7,
       },
       {
