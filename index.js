@@ -318,7 +318,18 @@ app.post("/webhook", async (req, res) => {
     const clave = `${platform}:${from}`;
 
     // Mensaje de bienvenida en el primer contacto
-    const MENSAJE_BIENVENIDA = `👋 ¡Hola! Soy *Innova AI* de *Innova Internacional*. ¿En qué puedo ayudarte?
+    const MENSAJE_BIENVENIDA_ES = `👋 ¡Hola! Soy *Innova AI* de *Innova Internacional*. ¿En qué puedo ayudarte?
+
+1️⃣ 💻 Software a medida
+2️⃣ 📱 Apps y páginas web
+3️⃣ 🌐 Infraestructura y redes
+4️⃣ 📦 Importaciones
+5️⃣ 🤖 Automatización con IA
+6️⃣ 📈 Consultoría empresarial
+
+Elige un número o cuéntame directamente. 😊`;
+
+    const MENSAJE_BIENVENIDA_BILINGUAL = `👋 ¡Hola! Soy *Innova AI* de *Innova Internacional*. ¿En qué puedo ayudarte?
 
 1️⃣ 💻 Software a medida
 2️⃣ 📱 Apps y páginas web
@@ -340,6 +351,8 @@ Elige un número o cuéntame directamente. 😊
 6️⃣ 📈 Business consulting
 
 Pick a number or just tell me what you need. 😊`;
+
+    const MENSAJE_BIENVENIDA = platform === "whatsapp" ? MENSAJE_BIENVENIDA_ES : MENSAJE_BIENVENIDA_BILINGUAL;
 
     if (!conversaciones[clave]) {
       conversaciones[clave] = [];
