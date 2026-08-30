@@ -403,7 +403,7 @@ async function obtenerRespuesta(historial) {
     const response = await axios.post(
       "https://api.groq.com/openai/v1/chat/completions",
       {
-        model: process.env.GROQ_MODEL || "llama3-8b-8192",
+        model: process.env.GROQ_MODEL || "openai/gpt-oss-20b",
         messages: mensajes,
         max_tokens: 800,
         temperature: 0.7,
