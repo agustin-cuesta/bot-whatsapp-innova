@@ -209,7 +209,7 @@ async function obtenerRespuesta(historial) {
     const response = await axios.post(
       "https://api.groq.com/openai/v1/chat/completions",
       {
-        model: "llama-3.1-8b-instant",
+        model: process.env.GROQ_MODEL || "llama3-8b-8192",
         messages: mensajes,
         max_tokens: 500,
         temperature: 0.7,
