@@ -240,10 +240,15 @@ app.post("/webhook", async (req, res) => {
     // WhatsApp: entry.changes[0].value.messages
     // Facebook/Instagram: entry.messaging (directo en entry)
     let rawMessages;
+    let phoneNumberId = process.env.PHONE_NUMBER_ID; // fallback al del .env
     if (platform === "whatsapp") {
       const change = entry?.changes?.[0];
       const value = change?.value;
       rawMessages = value?.messages;
+      // Usar el phone_number_id que viene en el webhook (soporta múltiples números)
+      if (value?.metadata?.phone_number_id) {
+        phoneNumberId = value.metadata.phone_number_id;
+      }
     } else {
       // Messenger e Instagram usan entry.messaging directamente
       rawMessages = entry?.messaging;
@@ -261,7 +266,7 @@ app.post("/webhook", async (req, res) => {
       // WhatsApp: { from, type: "text", text: { body } }
       from = raw.from;
       if (raw.type !== "text") {
-        await enviarMensaje(from, "Por el momento solo puedo responder mensajes de texto. 😊", platform);
+        await enviarMensaje(from, "Por el momento solo puedo responder mensajes de texto. 😊", platform, phoneNumberId);
         return res.sendStatus(200);
       }
       textoRecibido = raw.text?.body || "";
@@ -283,7 +288,7 @@ app.post("/webhook", async (req, res) => {
       if (!msg.text) {
         // No es texto (sticker, imagen, etc.) — solo responder si hay from válido
         if (from) {
-          await enviarMensaje(from, "Por el momento solo puedo responder mensajes de texto. 😊", platform);
+          await enviarMensaje(from, "Por el momento solo puedo responder mensajes de texto. 😊", platform, phoneNumberId);
         }
         return res.sendStatus(200);
       }
@@ -299,13 +304,14 @@ app.post("/webhook", async (req, res) => {
     // Detectar si el cliente quiere hablar con un humano
     if (detectarSolicitudHumano(textoRecibido)) {
       const respuestaHumano = "Un agente se comunicará contigo en breve. Gracias por tu paciencia. 😊";
-      await enviarMensaje(from, respuestaHumano, platform);
+      await enviarMensaje(from, respuestaHumano, platform, phoneNumberId);
 
       if (process.env.OWNER_PHONE) {
         await enviarMensaje(
           process.env.OWNER_PHONE,
           `🔔 *Cliente necesita atención humana*\n\n📱 Plataforma: ${platform}\n📞 ID: ${from}\n💬 Mensaje: "${textoRecibido}"`,
-          "whatsapp"
+          "whatsapp",
+          process.env.PHONE_NUMBER_ID
         );
       }
 
@@ -356,7 +362,7 @@ Pick a number or just tell me what you need. 😊`;
 
     if (!conversaciones[clave]) {
       conversaciones[clave] = [];
-      await enviarMensaje(from, MENSAJE_BIENVENIDA, platform);
+      await enviarMensaje(from, MENSAJE_BIENVENIDA, platform, phoneNumberId);
       console.log(`👋 [${platform.toUpperCase()}] Bienvenida enviada a ${from}`);
     }
 
@@ -375,8 +381,8 @@ Pick a number or just tell me what you need. 😊`;
     conversaciones[clave].push({ role: "model", parts: [{ text: respuesta }] });
 
     // Enviar respuesta por la misma plataforma
-    await enviarMensaje(from, respuesta, platform);
-    console.log(`✅ [${platform.toUpperCase()}] Respuesta enviada a ${from}: ${respuesta}`);
+    await enviarMensaje(from, respuesta, platform, phoneNumberId);
+    console.log(`✅ [${platform.toUpperCase()}] [${phoneNumberId}] Respuesta enviada a ${from}: ${respuesta}`);
 
     res.sendStatus(200);
   } catch (error) {
@@ -428,11 +434,12 @@ async function obtenerRespuesta(historial) {
 }
 
 // ─── Función: enviar mensaje por cualquier plataforma ─────────────────────────
-async function enviarMensaje(to, texto, platform = "whatsapp") {
+async function enviarMensaje(to, texto, platform = "whatsapp", phoneNumberId = null) {
   try {
     if (platform === "whatsapp") {
+      const numId = phoneNumberId || process.env.PHONE_NUMBER_ID;
       await axios.post(
-        `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`,
+        `https://graph.facebook.com/v19.0/${numId}/messages`,
         {
           messaging_product: "whatsapp",
           to: to,
