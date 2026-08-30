@@ -438,6 +438,10 @@ async function enviarMensaje(to, texto, platform = "whatsapp", phoneNumberId = n
   try {
     if (platform === "whatsapp") {
       const numId = phoneNumberId || process.env.PHONE_NUMBER_ID;
+      // Usar token según el número que envía
+      const token = numId === process.env.PHONE_NUMBER_ID
+        ? process.env.WHATSAPP_TOKEN
+        : (process.env.WHATSAPP_TOKEN_2 || process.env.WHATSAPP_TOKEN);
       await axios.post(
         `https://graph.facebook.com/v19.0/${numId}/messages`,
         {
@@ -448,7 +452,7 @@ async function enviarMensaje(to, texto, platform = "whatsapp", phoneNumberId = n
         },
         {
           headers: {
-            Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
